@@ -27,9 +27,16 @@ echo "Writing Dockerfile..."
 cat <<EOF > Dockerfile
 FROM ubuntu:22.04
 
-RUN apt update
-RUN apt install -y tmate
-EOF
+RUN apt-get update && \
+    apt-get install -y tmate openssh-server openssh-client && \
+    sudo sed -i 's/^#\?\s*PermitRootLogin\s\+.*/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    echo 'root:root' | chpasswd && \
+    printf '#!/bin/sh\nexit 0' > /usr/sbin/policy-rc.d && \
+    apt-get install -y systemd systemd-sysv dbus dbus-user-session && \
+    printf "systemctl start systemd-logind" >> /etc/profile
+
+CMD ["bash"]
+ENTRYPOINT ["/sbin/init"]
 
 echo Made successfully - Building Docker image.
 echo "Building Docker Image"
